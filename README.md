@@ -1,3 +1,12 @@
+![GitHub release](https://img.shields.io/github/v/release/ShahzaibAnwar/awesome-n8n-workflows?style=for-the-badge)
+![License](https://img.shields.io/github/license/ShahzaibAnwar/awesome-n8n-workflows?style=for-the-badge)
+![n8n](https://img.shields.io/badge/n8n-automation-orange?style=for-the-badge)
+
+## Featured Workflow
+
+### Google Drive Workflow Backup
+Automatically backup all n8n workflows to Google Drive with automatic cleanup of old backups.
+
 # Awesome n8n Workflows
 
 Production-ready n8n workflows for automation, AI agents, CRM, backups, integrations, and productivity.
