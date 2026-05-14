@@ -1,0 +1,485 @@
+{
+  "name": "Self-Hosted n8n Workflow Backup to Google Drive",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -168
+      ],
+      "id": "aa137122-3852-41e9-a2ca-ea150d787434",
+      "name": "When clicking \u2018Execute workflow\u2019"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "=n8n-backup-{{ $now.format('yyyy-MM-dd-HH-mm') }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GOOGLE_DRIVE_PARENT_FOLDER_ID",
+          "mode": "id",
+          "cachedResultName": "Select your backup parent folder"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        224,
+        -240
+      ],
+      "id": "14c83504-9602-4239-8640-7413c95de203",
+      "name": "Create folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_DRIVE_CREDENTIAL_ID",
+          "name": "Google Drive account - replace me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "filters": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        448,
+        -240
+      ],
+      "id": "6c2b1161-e16c-4546-8500-374491cda7d5",
+      "name": "Get many workflows",
+      "credentials": {
+        "n8nApi": {
+          "id": "REPLACE_WITH_YOUR_N8N_API_CREDENTIAL_ID",
+          "name": "n8n API account - replace me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        672,
+        -240
+      ],
+      "id": "2b83a96d-2cdf-492b-b350-ed1a1fb1eced",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "mode": "each",
+        "options": {
+          "fileName": "={{ $json.name.replace(/[\\\\/:*?\"<>|]/g, \"-\") }}.json"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        -240
+      ],
+      "id": "f958d706-0048-4604-8466-1f1b7300c38b",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "name": "={{ $binary.data.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Create folder').first().json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        -168
+      ],
+      "id": "ab13e5f7-1b0b-4a78-b278-f5bd6e6dd247",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_DRIVE_CREDENTIAL_ID",
+          "name": "Google Drive account - replace me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "n8n-backup-",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "REPLACE_WITH_GOOGLE_DRIVE_PARENT_FOLDER_ID",
+            "mode": "id",
+            "cachedResultName": "Select your backup parent folder"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        -432
+      ],
+      "id": "2527eb8e-b886-43fe-8bce-a06602c41040",
+      "name": "Search files and folders",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_DRIVE_CREDENTIAL_ID",
+          "name": "Google Drive account - replace me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "name",
+              "order": "descending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        -432
+      ],
+      "id": "efe975d1-eb6d-4749-9d61-829fe10a65b6",
+      "name": "Sort"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0f117735-1005-4075-b4d3-dd8afe4649dd",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "={{ $('Create folder').first().json.id }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        1568,
+        -432
+      ],
+      "id": "35a70997-5132-463b-b7fb-f1fa7df8eb2b",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "operation": "deleteFolder",
+        "folderNoRootId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1792,
+        -432
+      ],
+      "id": "4f8dfde5-6880-4841-8dfa-ff670a0ad952",
+      "name": "Delete folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_DRIVE_CREDENTIAL_ID",
+          "name": "Google Drive account - replace me"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        896,
+        -432
+      ],
+      "id": "b041e539-627f-44a0-9891-c818aa53d661",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        -360
+      ],
+      "id": "2ea70555-933e-4039-b91e-de3934c22deb",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "content": "# Self-hosted n8n workflow backup to Google Drive\n\nThis workflow automatically exports all workflows from a self-hosted n8n instance and saves them as JSON files in Google Drive.\n\n## What it does\n1. Runs manually or on a schedule.\n2. Creates a new Google Drive folder named `n8n-backup-YYYY-MM-DD-HH-mm`.\n3. Gets all workflows through the n8n API node.\n4. Converts each workflow item into a separate `.json` file.\n5. Uploads every JSON file into the new backup folder.\n6. After uploads finish, searches the backup parent folder.\n7. Deletes previous backup folders and keeps only the folder created in the current run.\n\n## Before using\n- Add your Google Drive credential to all Google Drive nodes.\n- Add your n8n API credential to the n8n node.\n- In **Create folder** and **Search files and folders**, replace the parent folder ID with your Google Drive backup parent folder.\n- Test manually first before activating the schedule.\n- If you want to keep more than one backup, change the cleanup Filter logic before enabling delete.\n\n## Safety note\nThe delete step removes older backup folders matching `n8n-backup-`. Keep the naming prefix unique and only use this workflow inside a dedicated backup parent folder.\n",
+        "height": 420,
+        "width": 980,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -760
+      ],
+      "id": "sticky-main-publish-note",
+      "name": "README - How this workflow works"
+    },
+    {
+      "parameters": {
+        "content": "## Setup checklist\n\n1. Create a folder in Google Drive, for example:\n   `n8n workflow backups`\n\n2. Copy its folder ID from the URL.\n\n3. Paste that folder ID into:\n   - **Create folder** \u2192 Parent Folder\n   - **Search files and folders** \u2192 Folder filter\n\n4. Select credentials:\n   - Google Drive OAuth2 credential\n   - n8n API credential\n\n5. Run manually once and confirm the new folder contains exported JSON workflows.\n",
+        "height": 300,
+        "width": 430,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        160,
+        40
+      ],
+      "id": "sticky-setup-checklist",
+      "name": "Setup checklist"
+    },
+    {
+      "parameters": {
+        "content": "## Export loop\n\nThe n8n node returns all workflows as items.\n\nThe Loop Over Items node processes them one by one:\n- Convert to File creates one JSON file per workflow.\n- Upload file saves that JSON file to the folder created at the start.\n- Upload file connects back to the Loop node until all workflows are processed.\n",
+        "height": 250,
+        "width": 470,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        760,
+        40
+      ],
+      "id": "sticky-loop-explanation",
+      "name": "Export loop instructions"
+    },
+    {
+      "parameters": {
+        "content": "## Cleanup branch\n\nThis branch starts from the **done** output of the loop.\n\nThe Limit node is important. It prevents the cleanup search from running once per workflow item.\n\nCurrent cleanup behavior:\n- Search backup folders matching `n8n-backup-`\n- Sort by folder name descending\n- Filter out the folder created in this run\n- Delete older matching folders\n\nFor safer retention, adjust the Filter before publishing/activating.\n",
+        "height": 300,
+        "width": 560,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        860,
+        -760
+      ],
+      "id": "sticky-cleanup-explanation",
+      "name": "Cleanup branch instructions"
+    },
+    {
+      "parameters": {
+        "content": "## Delete step caution\n\nThis node deletes folders.\n\nOnly enable it after confirming:\n- Search returns backup folders only\n- The parent folder is dedicated to backups\n- The filter excludes the folder created in the current run\n\nTo disable cleanup, disconnect this node.\n",
+        "height": 250,
+        "width": 440,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1510,
+        -760
+      ],
+      "id": "sticky-delete-warning",
+      "name": "Delete warning"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking \u2018Execute workflow\u2019": {
+      "main": [
+        [
+          {
+            "node": "Create folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create folder": {
+      "main": [
+        [
+          {
+            "node": "Get many workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many workflows": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search files and folders": {
+      "main": [
+        [
+          {
+            "node": "Sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Delete folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Create folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "tags": []
+}
